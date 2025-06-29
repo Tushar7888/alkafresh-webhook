@@ -2,3 +2,5 @@ flask
 openai
 twilio
 gunicorn
+openai==1.14.3
+
