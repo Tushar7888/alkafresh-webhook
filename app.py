@@ -5,28 +5,31 @@ import os
 
 app = Flask(__name__)
 
-# Set OpenAI API key from environment variable
+# OpenAI API key from environment
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     incoming_msg = request.form.get('Body', '').strip()
     resp = MessagingResponse()
-    msg = resp.message()
+
+    if not incoming_msg:
+        resp.message("❌ Empty message received.")
+        return str(resp)
 
     try:
-        if incoming_msg:
-            # OpenAI GPT call
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": incoming_msg}]
-            )
-            reply = response['choices'][0]['message']['content'].strip()
-            msg.body(reply)
-        else:
-            msg.body("❌ Empty message received.")
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant for Alkafresh customer queries."},
+                {"role": "user", "content": incoming_msg}
+            ]
+        )
+        reply = completion.choices[0].message.content
+        resp.message(reply)
+
     except Exception as e:
-        msg.body("⚠️ AI system down hai. Try again later.")
-        print(f"OpenAI Error: {e}")  # Logs me dikhega
+        print(f"OpenAI Error: {e}")
+        resp.message("⚠️ AI system down hai. Try again later.")
 
     return str(resp)
