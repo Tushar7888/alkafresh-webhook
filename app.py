@@ -22,7 +22,7 @@ def webhook():
             completion = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are Alkafresh SmartCare AI Bot. Answer in Hinglish."},
+                    {"role": "system", "content": "You are Alkafresh SmartCare AI  Bot. Answer in Hinglish."},
                     {"role": "user", "content": incoming_msg}
                 ]
             )
