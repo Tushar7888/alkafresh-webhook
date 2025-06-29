@@ -5,31 +5,31 @@ import os
 
 app = Flask(__name__)
 
-# Load OpenAI key from environment
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+# Load OpenAI API Key from Render environment variable
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
+    incoming_msg = request.values.get('Body', '').strip()
+    print(f"User: {incoming_msg}")
+
     try:
-        incoming_msg = request.values.get('Body', '').strip()
-
-        # Get AI response using latest API (openai>=1.0.0)
-        client = openai.OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": incoming_msg}],
-            temperature=0.7
+        # Ask OpenAI GPT-3.5
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=incoming_msg,
+            max_tokens=150
         )
-
-        reply_text = response.choices[0].message.content.strip()
-
+        answer = response.choices[0].text.strip()
     except Exception as e:
-        reply_text = "⚠️ AI system down hai. Try again later."
+        print("OpenAI Error:", e)
+        answer = "⚠️ AI system down. Try again later."
 
-    # Twilio response
-    twilio_resp = MessagingResponse()
-    twilio_resp.message(reply_text)
-    return str(twilio_resp)
+    # Send back via Twilio
+    twilio_response = MessagingResponse()
+    twilio_response.message(answer)
+    return str(twilio_response)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(debug=False, host="0.0.0.0", port=port)
